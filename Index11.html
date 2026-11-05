@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101020">
+  <title>Мой первый файл</title>
+  <style>
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: #101020; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      overflow-x: hidden;
+      color: #f8f5ff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(ellipse at 20% 15%, #643bb33b, transparent 55%),
+        radial-gradient(ellipse at 85% 85%, #286d9630, transparent 55%),
+        linear-gradient(135deg, #171126, #0c1020 60%, #101c2b);
+    }
+    main {
+      width: min(100%, 1050px);
+      padding: 70px 24px;
+      text-align: center;
+    }
+    .eyebrow {
+      margin: 0 0 30px;
+      color: #b6a1df;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .24em;
+      text-transform: uppercase;
+      animation: appear 1s ease-out both;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 5.7vw, 72px);
+      font-weight: 650;
+      line-height: 1.16;
+      letter-spacing: -.045em;
+      text-wrap: balance;
+      text-shadow: 0 0 32px #c0a0ff30, 0 0 80px #9b72ef20;
+      animation: appear 1.2s .12s ease-out both;
+    }
+    .greeting {
+      display: block;
+      margin-bottom: 14px;
+      color: #c9b4ff;
+    }
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 44px;
+      padding: 17px 27px;
+      border: 1px solid #d9caff50;
+      border-radius: 100px;
+      background: linear-gradient(120deg, #aa83ee, #7d6bdf);
+      color: #fff;
+      font: inherit;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 8px 35px #8154d22e, inset 0 1px 0 #ffffff25;
+      transition: transform .2s, box-shadow .2s;
+      animation: appear 1s .35s ease-out both;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:hover { transform: translateY(-3px); box-shadow: 0 12px 45px #9565e950; }
+    button:active { transform: translateY(0) scale(.97); }
+    button:focus-visible { outline: 3px solid #e0d3ff; outline-offset: 6px; }
+    button svg { width: 20px; height: 20px; }
+    .hint {
+      margin: 19px 0 0;
+      color: #9b95ae;
+      font-size: 13px;
+      animation: appear 1s .55s ease-out both;
+    }
+    canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+    @keyframes appear {
+      from { opacity: 0; transform: translateY(22px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">Начало чего-то нового</p>
+    <h1><span class="greeting">Привет!</span> Это мой первый файл, который собрал ИИ-агент</h1>
+    <button id="celebrate" type="button">
+      Нажми меня
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="m5 10-3 12 12-3-9-9Z" stroke-linejoin="round"/>
+        <path d="M8 3v3m10-4-2 5m5 3-4 1M12 9l2-2m3 9 3 1" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <p class="hint">Маленький клик — большой праздник</p>
+  </main>
+  <canvas id="confetti" aria-hidden="true"></canvas>
+  <script>
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+    const button = document.getElementById('celebrate');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const colors = ['#c3a1ff', '#8c82ff', '#7edcdb', '#ffd38b', '#ff92ba', '#ffffff'];
+    let particles = [];
+    let frame = null;
+    let lastTime = 0;
+
+    function resize() {
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(window.innerWidth * ratio);
+      canvas.height = Math.round(window.innerHeight * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function draw(time) {
+      const step = Math.min((time - lastTime) / 16.67, 2);
+      lastTime = time;
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      particles = particles.filter(p => p.life > 0 && p.y < window.innerHeight + 30);
+      for (const p of particles) {
+        p.x += p.vx * step;
+        p.y += p.vy * step;
+        p.vy += .13 * step;
+        p.vx *= Math.pow(.992, step);
+        p.rotation += p.spin * step;
+        p.life -= step;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.globalAlpha = Math.min(p.life / 30, 1);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);
+        ctx.restore();
+      }
+      frame = particles.length ? requestAnimationFrame(draw) : null;
+    }
+
+    button.addEventListener('click', () => {
+      if (!ctx) return;
+      const rect = button.getBoundingClientRect();
+      const count = reducedMotion.matches ? 30 : 150;
+      for (let i = 0; i < count; i++) {
+        const angle = -Math.PI / 2 + (Math.random() - .5) * 2.4;
+        const speed = 5 + Math.random() * 11;
+        particles.push({
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          size: 5 + Math.random() * 7,
+          rotation: Math.random() * Math.PI,
+          spin: (Math.random() - .5) * .2,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          life: reducedMotion.matches ? 22 : 140 + Math.random() * 40
+        });
+      }
+      particles = particles.slice(-600);
+      if (frame === null) {
+        lastTime = performance.now();
+        frame = requestAnimationFrame(draw);
+      }
+    });
+
+    if (ctx) {
+      resize();
+      window.addEventListener('resize', resize);
+    }
+  </script>
+</body>
+</html>
